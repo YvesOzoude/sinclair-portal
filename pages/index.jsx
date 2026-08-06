@@ -153,7 +153,7 @@ export default function SinclairLogin() {
                 Browse the portal as a guest. When you're ready, create an account to save your progress.
               </p>
               <button
-                onClick={() => window.location.href = "/dashboard"}
+                onClick={() => window.location.href = "/demo"}
                 style={{ ...btnBase, background: "#c0392b", color: "#fff", marginBottom: 12 }}
               >
                 Enter Demo
