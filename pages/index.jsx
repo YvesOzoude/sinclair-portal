@@ -64,7 +64,7 @@ export default function SinclairLogin() {
           {mode === null && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <button
-                onClick={() => setMode("employer")}
+                onClick={() => setMode(window.location.href = "/employer")}
                 style={{ ...btnBase, background: "#c0392b", color: "#fff" }}
               >
                 Employer Login
