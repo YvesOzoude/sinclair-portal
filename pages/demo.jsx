@@ -30,29 +30,41 @@ const S = {
 };
 
 // PDF generation helper
+function sanitize(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/–/g, "-").replace(/—/g, "-")
+    .replace(/‘/g, "'").replace(/’/g, "'")
+    .replace(/“/g, '"').replace(/”/g, '"')
+    .replace(/â/g, "'");
+}
+
 function generatePDF(title, rows, contact, footer) {
-  let html = `<html><head><meta charset="UTF-8"><style>
-    body{font-family:Georgia,serif;padding:40px;color:#0B1E3F;}
-    h1{color:#0B1E3F;border-bottom:2px solid #B8871E;padding-bottom:8px;}
-    h2{color:#B8871E;font-size:15px;margin-top:24px;}
-    table{width:100%;border-collapse:collapse;margin-top:12px;}
-    td,th{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:left;}
-    th{color:#666;font-weight:normal;}
-    .footer{margin-top:40px;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;}
-    .highlight{background:#F8F6F2;padding:16px;border-radius:6px;margin:16px 0;}
-  </style></head><body>
-  <img src="data:image/png;base64,${LOGO_B64}" style="height:50px;margin-bottom:16px;" />
-  <h1>${title}</h1>`;
-  if (contact) html += `<div class="highlight"><strong>Name:</strong> ${contact.name || "—"} &nbsp;&nbsp; <strong>Email:</strong> ${contact.email || "—"} &nbsp;&nbsp; <strong>Date:</strong> ${new Date().toLocaleDateString()}</div>`;
-  rows.forEach(([label, val]) => {
-    html += `<table><tr><th>${label}</th><td>${val}</td></tr></table>`;
+  const safeTitle = sanitize(title);
+  const css = [
+    "body{font-family:Georgia,serif;padding:40px;color:#0B1E3F;}",
+    "h1{color:#0B1E3F;border-bottom:2px solid #B8871E;padding-bottom:8px;}",
+    "table{width:100%;border-collapse:collapse;margin-top:4px;}",
+    "td,th{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:left;}",
+    "th{color:#666;font-weight:normal;width:60%;}",
+    ".footer{margin-top:40px;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;}",
+    ".highlight{background:#F8F6F2;padding:16px;border-radius:6px;margin:16px 0;}",
+  ].join("");
+  let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + safeTitle + "</title><style>" + css + "</style></head><body>";
+  html += '<img src="data:image/png;base64,' + LOGO_B64 + '" style="height:50px;margin-bottom:16px;" />';
+  html += "<h1>" + safeTitle + "</h1>";
+  if (contact) {
+    html += '<div class="highlight"><strong>Name:</strong> ' + sanitize(contact.name || "-") + " &nbsp;&nbsp; <strong>Email:</strong> " + sanitize(contact.email || "-") + " &nbsp;&nbsp; <strong>Date:</strong> " + new Date().toLocaleDateString() + "</div>";
+  }
+  rows.forEach(function(row) {
+    html += "<table><tr><th>" + sanitize(row[0]) + "</th><td>" + sanitize(row[1]) + "</td></tr></table>";
   });
-  if (footer) html += `<p>${footer}</p>`;
-  html += `<div class="footer">Prepared by ${ADVISOR.name} | NMLS #${ADVISOR.nmls} | ${ADVISOR.email} | <a href="${APP_LINK}">${APP_LINK}</a></div></body></html>`;
-  const blob = new Blob([html], { type: "text/html" });
+  if (footer) html += "<p>" + sanitize(footer) + "</p>";
+  html += '<div class="footer">Prepared by ' + ADVISOR.name + " | NMLS #" + ADVISOR.nmls + " | " + ADVISOR.email + ' | <a href="' + APP_LINK + '">' + APP_LINK + '</a></div></body></html>';
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = `${title.replace(/\s+/g, "_")}.html`; a.click();
+  a.href = url; a.download = safeTitle.replace(/\s+/g, "_") + ".html"; a.click();
   URL.revokeObjectURL(url);
 }
 
