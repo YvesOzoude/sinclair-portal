@@ -1,5 +1,5 @@
 // pages/api/send-assessment-email.js
-// Auto-email readiness assessment PDF to user via SendGrid
+// Handles email sending for ALL assessments in the Sinclair portal
 
 import sgMail from '@sendgrid/mail';
 
@@ -11,77 +11,96 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userEmail, userName, assessmentData, pdfBase64 } = req.body;
+    const { userEmail, userName, reportTitle, htmlContent } = req.body;
 
-    // Validate inputs
-    if (!userEmail || !assessmentData || !pdfBase64) {
+    if (!userEmail || !htmlContent) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Prepare email
+    // Convert HTML to base64 for attachment
+    const base64Content = Buffer.from(htmlContent).toString('base64');
+    const filename = (reportTitle || 'Sinclair-Report')
+      .replace(/[^a-zA-Z0-9\-_]/g, '_') + '.html';
+
     const msg = {
       to: userEmail,
       from: 'yves@sinclairhq.com',
-      subject: 'Your Homeownership Readiness Assessment Results',
+      subject: `Your Sinclair Report: ${reportTitle || 'Results'}`,
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #0B1E3F; margin-bottom: 20px;">Your Readiness Assessment Results</h2>
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:20px;">
           
-          <p style="font-size: 16px; line-height: 1.6; color: #333;">Hi ${userName || 'there'},</p>
-          
-          <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Thank you for completing your homeownership readiness assessment! Your personalized report is attached.
-          </p>
-          
-          <div style="background-color: #F5F7FA; padding: 20px; border-radius: 8px; margin: 30px 0;">
-            <p style="font-size: 14px; color: #666; margin: 0;">
-              <strong>What's Next?</strong><br />
-              Review your assessment results and the personalized recommendations. Our team is here to help you on your path to homeownership.
+          <div style="background:#0B1E3F;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+            <h1 style="color:#B8871E;margin:0;font-size:28px;font-family:Georgia,serif;">Sinclair</h1>
+            <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:13px;letter-spacing:0.05em;">
+              HOMEOWNERSHIP FINANCIAL WELLNESS
             </p>
           </div>
-          
-          <p style="font-size: 14px; color: #666; margin-top: 30px;">
-            Questions? Get in touch with our team:
-          </p>
-          
-          <div style="background-color: #0B1E3F; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0; font-size: 14px;">
-              <strong>Yves Ozoude</strong><br />
-              Mortgage Loan Originator | NMLS #1857419<br />
-              <a href="mailto:yves@sinclairhq.com" style="color: #B8871E; text-decoration: none;">yves@sinclairhq.com</a><br />
-              713-931-0655
+
+          <div style="background:#ffffff;padding:32px;border:1px solid #E8E8ED;border-top:none;">
+            <h2 style="color:#0B1E3F;margin:0 0 16px;font-size:20px;">
+              Hi ${userName || 'there'},
+            </h2>
+            <p style="color:#333;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Your <strong>${reportTitle || 'Sinclair Report'}</strong> is attached to this email. 
+              Open it in any browser to view your personalized results.
+            </p>
+            
+            <div style="background:#F5F7FA;border-radius:8px;padding:20px;margin-bottom:24px;">
+              <p style="color:#666;font-size:13px;margin:0 0 8px;font-weight:bold;">What to do next:</p>
+              <ul style="color:#555;font-size:14px;line-height:1.8;margin:0;padding-left:20px;">
+                <li>Open the attached report file</li>
+                <li>Review your personalized results</li>
+                <li>Follow the recommended next steps</li>
+                <li>Schedule a consultation when ready</li>
+              </ul>
+            </div>
+
+            <div style="background:#0B1E3F;border-radius:8px;padding:20px;">
+              <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0 0 8px;">YOUR DEDICATED ADVISOR</p>
+              <p style="color:#ffffff;font-size:15px;font-weight:bold;margin:0 0 4px;">Yves Ozoude</p>
+              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin:0 0 2px;">
+                Mortgage Loan Originator | NMLS #1857419
+              </p>
+              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin:0 0 2px;">
+                713-931-0655
+              </p>
+              <p style="font-size:13px;margin:8px 0 0;">
+                <a href="mailto:yves@sinclairhq.com" style="color:#B8871E;">yves@sinclairhq.com</a>
+                &nbsp;·&nbsp;
+                <a href="https://myuhm.uhm.com/homehub/signup/yozoude@uhm.com?from_mobile_share=true" 
+                   style="color:#B8871E;">Start Application →</a>
+              </p>
+            </div>
+          </div>
+
+          <div style="padding:16px;text-align:center;">
+            <p style="color:#999;font-size:11px;margin:0;">
+              Sinclair | Everyone Deserves a Door of Their Own
             </p>
           </div>
-          
-          <p style="font-size: 12px; color: #999; margin-top: 40px; text-align: center;">
-            Sinclair | Everyone Deserves a Door of Their Own
-          </p>
+
         </div>
       `,
       attachments: [
         {
-          content: pdfBase64,
-          filename: 'readiness-assessment.pdf',
-          type: 'application/pdf',
+          content: base64Content,
+          filename: filename,
+          type: 'text/html',
           disposition: 'attachment'
         }
       ]
     };
 
-    // Send email
     await sgMail.send(msg);
-
-    // Log send (optional — you can add database logging here)
-    console.log(`Assessment email sent to ${userEmail}`);
+    console.log(`[Sinclair] Report emailed to ${userEmail} — ${reportTitle}`);
 
     return res.status(200).json({
       success: true,
-      message: 'Assessment email sent successfully',
-      email: userEmail
+      message: `Report sent to ${userEmail}`
     });
 
   } catch (error) {
-    console.error('SendGrid error:', error);
+    console.error('[Sinclair] SendGrid error:', error?.response?.body || error.message);
     return res.status(500).json({
       error: 'Failed to send email',
       details: error.message
