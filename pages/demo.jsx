@@ -196,22 +196,6 @@ function generatePDF(title, rows, contact, footer) {
     })
     .catch(function(err) { console.error('[Sinclair] Email error:', err); });
   }
-    if (contact && contact.email) {
-    fetch('/api/send-assessment-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userEmail: contact.email,
-        userName: contact.name || '',
-        reportTitle: safeTitle,
-        htmlContent: html
-      })
-    })
-    .then(function(res) {
-      if (res.ok) { console.log('[Sinclair] Emailed to', contact.email); }
-    })
-    .catch(function(err) { console.error('[Sinclair] Email error:', err); });
-  }
 
 }
 
