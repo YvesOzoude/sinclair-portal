@@ -13,25 +13,25 @@ export default async function handler(req, res) {
     const base64Content = Buffer.from(htmlContent).toString('base64');
     const filename = (reportTitle || 'Sinclair-Report').replace(/[^a-zA-Z0-9\-_]/g, '_') + '.html';
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: userEmail, name: userName || '' }] }],
-        from: { email: 'hello@sinclairhq.com', name: 'Yves Ozoude | Sinclair' },
+        from: 'Yves Ozoude | Sinclair <hello@sinclairhq.com>',
+        to: [userEmail],
         subject: `Your Sinclair Report: ${reportTitle || 'Results'}`,
-        content: [{ type: 'text/html', value: `<p>Hi ${userName || 'there'},</p><p>Your <strong>${reportTitle}</strong> report is attached.</p><p>Yves Ozoude | NMLS #1857419 | 713-931-0655</p>` }],
-        attachments: [{ content: base64Content, filename: filename, type: 'text/html', disposition: 'attachment' }]
+        html: `<p>Hi ${userName || 'there'},</p><p>Your <strong>${reportTitle}</strong> report is attached.</p><p>Yves Ozoude | NMLS #1857419 | 713-931-0655 | YOzoude@UHM.com</p>`,
+        attachments: [{ filename: filename, content: base64Content }]
       })
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('[Sinclair] SendGrid error:', error);
-      return res.status(500).json({ error: 'SendGrid failed', details: error });
+      console.error('[Sinclair] Resend error:', error);
+      return res.status(500).json({ error: 'Resend failed', details: error });
     }
 
     console.log('[Sinclair] Email sent to', userEmail);
