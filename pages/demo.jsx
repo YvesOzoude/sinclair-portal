@@ -171,7 +171,31 @@ function generatePDF(title, rows, contact, footer) {
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = safeTitle.replace(/\s+/g, "_") + ".html"; a.click();
+  a.href = url;
+  a.download = safeTitle.replace(/\s+/g, "_") + ".html";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Auto-email report to user
+  if (contact && contact.email) {
+    fetch('/api/send-assessment-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userEmail: contact.email,
+        userName: contact.name || '',
+        reportTitle: safeTitle,
+        htmlContent: html
+      })
+    })
+    .then(function(res) {
+      if (res.ok) { console.log('[Sinclair] Emailed to', contact.email); }
+      else { console.warn('[Sinclair] Email failed:', res.status); }
+    })
+    .catch(function(err) { console.error('[Sinclair] Email error:', err); });
+  }
     if (contact && contact.email) {
     fetch('/api/send-assessment-email', {
       method: 'POST',
