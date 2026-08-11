@@ -1,119 +1,17 @@
-import { jsPDF } from 'jspdf';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { userEmail, userName, reportTitle, htmlContent } = req.body;
+    const { userEmail, userName, reportTitle, pdfBase64 } = req.body;
 
-    if (!userEmail) {
+    if (!userEmail || !pdfBase64) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // ── GENERATE PDF ──────────────────────────────────────
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    const contentWidth = pageWidth - 2 * margin;
-    let y = 0;
-
-    // Navy header
-    doc.setFillColor(11, 30, 63);
-    doc.rect(0, 0, pageWidth, 45, 'F');
-
-    doc.setTextColor(184, 135, 30);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Sinclair', margin, 20);
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Homeownership Financial Wellness', margin, 30);
-    doc.text(new Date().toLocaleDateString(), margin, 38);
-
-    y = 58;
-
-    // Report title
-    doc.setTextColor(11, 30, 63);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(reportTitle || 'Assessment Report', margin, y);
-    y += 10;
-
-    // User info
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    if (userName) { doc.text('Prepared for: ' + userName, margin, y); y += 6; }
-    doc.text('Email: ' + userEmail, margin, y);
-    y += 12;
-
-    // Gold divider
-    doc.setDrawColor(184, 135, 30);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 10;
-
-    // Parse HTML rows
-    if (htmlContent) {
-      const tableRegex = /<tr>[\s\S]*?<th>([\s\S]*?)<\/th>[\s\S]*?<td>([\s\S]*?)<\/td>[\s\S]*?<\/tr>/g;
-      let match;
-      const rows = [];
-      while ((match = tableRegex.exec(htmlContent)) !== null) {
-        const label = match[1].replace(/<[^>]*>/g, '').trim();
-        const value = match[2].replace(/<[^>]*>/g, '').trim();
-        if (label && value) rows.push({ label, value });
-      }
-
-      if (rows.length > 0) {
-        rows.forEach((row, i) => {
-          if (i % 2 === 0) {
-            doc.setFillColor(245, 247, 250);
-            doc.rect(margin, y - 5, contentWidth, 10, 'F');
-          }
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(11, 30, 63);
-          const labelLines = doc.splitTextToSize(row.label, contentWidth * 0.6);
-          doc.text(labelLines, margin + 3, y);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(60, 60, 60);
-          const valueLines = doc.splitTextToSize(String(row.value), contentWidth * 0.35);
-          doc.text(valueLines, margin + contentWidth * 0.62, y);
-          y += Math.max(labelLines.length, valueLines.length) * 5 + 3;
-          if (y > 260) { doc.addPage(); y = 20; }
-        });
-      }
-    }
-
-    y += 10;
-    if (y > 240) { doc.addPage(); y = 20; }
-
-    // Contact footer box
-    doc.setFillColor(11, 30, 63);
-    doc.rect(margin, y, contentWidth, 35, 'F');
-    doc.setTextColor(184, 135, 30);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Your Dedicated Advisor', margin + 5, y + 8);
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Yves Ozoude | Mortgage Loan Originator | NMLS #1857419', margin + 5, y + 16);
-    doc.text('713-931-0655 | YOzoude@UHM.com', margin + 5, y + 22);
-    doc.text('Apply: myuhm.uhm.com/homehub/signup/yozoude@uhm.com', margin + 5, y + 28);
-
-    doc.setTextColor(180, 180, 180);
-    doc.setFontSize(7);
-    doc.text('Sinclair | Everyone Deserves a Door of Their Own', pageWidth / 2, 290, { align: 'center' });
-
-    const pdfBase64 = doc.output('datauristring').split(',')[1];
     const filename = (reportTitle || 'Sinclair-Report').replace(/[^a-zA-Z0-9\-_]/g, '_') + '.pdf';
 
-    // ── SEND VIA RESEND ───────────────────────────────────
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
