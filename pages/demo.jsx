@@ -178,74 +178,20 @@ async function generatePDF(title, rows, contact, footer) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  // Auto-email report as PDF
+  // Auto-email report
   if (contact && contact.email) {
-    try {
-      const { jsPDF } = await import('jspdf');
-      const pdfdoc = new jsPDF();
-      const pw = pdfdoc.internal.pageSize.getWidth();
-      pdfdoc.setFillColor(11,30,63);
-      pdfdoc.rect(0,0,pw,40,'F');
-      pdfdoc.setTextColor(184,135,30);
-      pdfdoc.setFontSize(20);
-      pdfdoc.setFont('helvetica','bold');
-      pdfdoc.text('Sinclair',20,18);
-      pdfdoc.setTextColor(255,255,255);
-      pdfdoc.setFontSize(9);
-      pdfdoc.setFont('helvetica','normal');
-      pdfdoc.text('Homeownership Financial Wellness | ' + new Date().toLocaleDateString(),20,28);
-      pdfdoc.setTextColor(11,30,63);
-      pdfdoc.setFontSize(14);
-      pdfdoc.setFont('helvetica','bold');
-      pdfdoc.text(safeTitle,20,52);
-      pdfdoc.setFontSize(9);
-      pdfdoc.setFont('helvetica','normal');
-      pdfdoc.setTextColor(100,100,100);
-      pdfdoc.text('For: ' + (contact.name||'') + ' | ' + contact.email,20,60);
-      let py = 72;
-      pdfdoc.setDrawColor(184,135,30);
-      pdfdoc.line(20,py,pw-20,py);
-      py += 8;
-      rows.forEach(function(row,i){
-        if(i%2===0){pdfdoc.setFillColor(245,247,250);pdfdoc.rect(20,py-4,pw-40,8,'F');}
-        pdfdoc.setFontSize(8);
-        pdfdoc.setFont('helvetica','bold');
-        pdfdoc.setTextColor(11,30,63);
-        pdfdoc.text(sanitize(row[0]).substring(0,55),22,py);
-        pdfdoc.setFont('helvetica','normal');
-        pdfdoc.setTextColor(60,60,60);
-        pdfdoc.text(sanitize(row[1]).substring(0,40),pw-20-60,py);
-        py+=7;
-        if(py>265){pdfdoc.addPage();py=20;}
-      });
-      py+=8;
-      if(py>245){pdfdoc.addPage();py=20;}
-      pdfdoc.setFillColor(11,30,63);
-      pdfdoc.rect(20,py,pw-40,28,'F');
-      pdfdoc.setTextColor(184,135,30);
-      pdfdoc.setFontSize(8);
-      pdfdoc.setFont('helvetica','bold');
-      pdfdoc.text('Your Dedicated Advisor',25,py+8);
-      pdfdoc.setTextColor(255,255,255);
-      pdfdoc.setFont('helvetica','normal');
-      pdfdoc.text('Yves Ozoude | NMLS #1857419 | 713-931-0655 | YOzoude@UHM.com',25,py+16);
-      pdfdoc.setTextColor(150,150,150);
-      pdfdoc.setFontSize(6);
-      pdfdoc.text('Sinclair | Everyone Deserves a Door of Their Own',pw/2,288,{align:'center'});
-      const pdfB64 = pdfdoc.output('datauristring').split(',')[1];
-      fetch('/api/send-assessment-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userEmail: contact.email,
-          userName: contact.name || '',
-          reportTitle: safeTitle,
-          pdfBase64: pdfB64
-        })
+    fetch('/api/send-assessment-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userEmail: contact.email,
+        userName: contact.name || '',
+        reportTitle: safeTitle,
+        htmlContent: html
       })
-      .then(function(r){ if(r.ok){console.log('[Sinclair] PDF emailed to',contact.email);} else {console.warn('[Sinclair] Email failed:',r.status);} })
-      .catch(function(e){ console.error('[Sinclair] Email error:',e); });
-    } catch(e) { console.error('[Sinclair] PDF gen error:',e); }
+    })
+    .then(function(r){ if(r.ok){console.log('[Sinclair] Email sent to',contact.email);} else {console.warn('[Sinclair] Email failed:',r.status);} })
+    .catch(function(e){ console.error('[Sinclair] Email error:',e); });
   }
 
 }
