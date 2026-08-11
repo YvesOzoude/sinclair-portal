@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: userEmail, name: userName || '' }] }],
-        from: { email: 'yves@sinclairhq.com', name: 'Yves Ozoude | Sinclair' },
+        from: { email: 'hello@sinclairhq.com', name: 'Yves Ozoude | Sinclair' },
         subject: `Your Sinclair Report: ${reportTitle || 'Results'}`,
         content: [{ type: 'text/html', value: `<p>Hi ${userName || 'there'},</p><p>Your <strong>${reportTitle}</strong> report is attached.</p><p>Yves Ozoude | NMLS #1857419 | 713-931-0655</p>` }],
         attachments: [{ content: base64Content, filename: filename, type: 'text/html', disposition: 'attachment' }]
