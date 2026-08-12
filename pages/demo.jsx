@@ -173,27 +173,9 @@ async function generatePDF(title, rows, contact, footer) {
   const a = document.createElement("a");
   a.href = url;
   a.download = safeTitle.replace(/\s+/g, "_") + ".html";
-    // Auto-email report
+  // Auto-email report
   if (contact && contact.email) {
     fetch('/api/send-assessment-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userEmail: contact.email,
-        userName: contact.name || '',
-        reportTitle: safeTitle,
-        htmlContent: html
-      })
-    })
-    .then(function(r){ if(r.ok){console.log('[Sinclair] Email sent to',contact.email);} })
-    .catch(function(e){ console.error('[Sinclair] Email error:',e); });
-  }
-
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -206,6 +188,11 @@ async function generatePDF(title, rows, contact, footer) {
     .then(function(r){ if(r.ok){console.log('[Sinclair] Email sent to',contact.email);} else {console.warn('[Sinclair] Email failed:',r.status);} })
     .catch(function(e){ console.error('[Sinclair] Email error:',e); });
   }
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 
 }
 
