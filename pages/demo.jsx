@@ -173,47 +173,10 @@ function generatePDF(title, rows, contact, footer) {
   const a = document.createElement("a");
   a.href = url;
   a.download = safeTitle.replace(/\s+/g, "_") + ".html";
-  // Auto-email report
-  if (contact && contact.email) {
-    fetch('/api/send-assessment-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userEmail: contact.email,
-        userName: contact.name || '',
-        reportTitle: safeTitle,
-        htmlContent: html
-      })
-    })
-    .then(function(r){ 
-      return r.json().then(function(data) {
-        var msg = document.createElement('div');
-        msg.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;text-align:center;font-size:16px;z-index:9999;';
-        if(r.ok){
-          msg.style.background = '#34C759';
-          msg.style.color = 'white';
-          msg.textContent = 'Email sent to ' + contact.email;
-        } else {
-          msg.style.background = '#FF3B30';
-          msg.style.color = 'white';
-          msg.textContent = 'Email failed: ' + JSON.stringify(data);
-        }
-        document.body.appendChild(msg);
-      });
-    })
-    .catch(function(e){ 
-      var msg = document.createElement('div');
-      msg.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;text-align:center;font-size:16px;z-index:9999;background:#FF3B30;color:white;';
-      msg.textContent = 'Fetch error: ' + e.message;
-      document.body.appendChild(msg);
-    });
-  }
-
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-
 }
 
 
@@ -416,7 +379,25 @@ function ReadinessAssessment({ onScore, onProgress }) {
               )}
             </div>
           ))}
-          <button style={{ ...S.btnPrimary, opacity: allAnswered ? 1 : 0.5 }} onClick={calculate} disabled={!allAnswered}>
+          <button style={{ ...S.btnPrimary, opacity: allAnswered ? 1 : 0.5 }} onClick={() => {
+              calculate();
+              var _rows = QUESTIONS.map(function(q,i){ return [q.q, answers[i] !== null ? q.opts[answers[i]] : "-"]; });
+              _rows.push(["Readiness Score", Math.round((answers.reduce(function(s,a,i){ return s + (a !== null ? QUESTIONS[i].pts[a] : 0); }, 0) / 32) * 100) + " / 100"]);
+              var _css = ["body{font-family:Georgia,serif;padding:40px;color:#0B1E3F;}","h1{color:#0B1E3F;border-bottom:2px solid #B8871E;padding-bottom:8px;}","table{width:100%;border-collapse:collapse;margin-top:4px;}","td,th{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:left;}","th{color:#666;font-weight:normal;width:60%;}",".highlight{background:#F8F6F2;padding:16px;border-radius:6px;margin:16px 0;}"].join("");
+              var _title = "Readiness Score - " + sanitize(contact.lastName) + ", " + sanitize(contact.firstName);
+              var _html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + _title + '</title><style>' + _css + '</style></head><body>';
+              _html += "<h1>" + _title + "</h1>";
+              _html += '<div class="highlight"><strong>Name:</strong> ' + sanitize(contact.firstName + " " + contact.lastName) + ' &nbsp;&nbsp; <strong>Email:</strong> ' + sanitize(contact.email) + ' &nbsp;&nbsp; <strong>Date:</strong> ' + new Date().toLocaleDateString() + "</div>";
+              _rows.forEach(function(row){ _html += "<table><tr><th>" + sanitize(row[0]) + "</th><td>" + sanitize(row[1]) + "</td></tr></table>"; });
+              _html += '<div style="margin-top:40px;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;">Prepared by ' + ADVISOR.name + " | NMLS #" + ADVISOR.nmls + " | " + ADVISOR.email + '</div></body></html>';
+              if (contact && contact.email) {
+                fetch('/api/send-assessment-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userEmail: contact.email, userName: contact.firstName + " " + contact.lastName, reportTitle: _title, htmlContent: _html })
+                }).then(function(r){ if(r.ok){ console.log('[Sinclair] Email sent to', contact.email); } else { console.warn('[Sinclair] Email failed:', r.status); } }).catch(function(e){ console.error('[Sinclair] Email error:', e); });
+              }
+            }} disabled={!allAnswered}>
             Calculate My Score & Download Results
           </button>
         </>
