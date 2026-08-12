@@ -328,7 +328,7 @@ function ReadinessAssessment({ onScore, onProgress }) {
 
   const allAnswered = answers.every(a => a !== null);
   const contactReady = contact.firstName && contact.lastName && contact.email;
-  const [sendEmail, setSendEmail] = React.useState(true);
+  const [sendEmail, setSendEmail] = useState(true);
   const scoreColor = result >= 70 ? C.green : result >= 40 ? C.gold : C.red;
   const scoreLabel = result >= 70 ? "Ready to Begin" : result >= 40 ? "Building Readiness" : "Early Stage - Let's Get Started";
   const dpaTriggered = answers[1] !== null && QUESTIONS[1].dpaAlert.includes(answers[1]);
