@@ -394,7 +394,7 @@ function ReadinessAssessment({ onScore, onProgress }) {
                 fetch('/api/send-report', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userEmail: contact.email, userName: contact.firstName + " " + contact.lastName, reportTitle: _title, htmlContent: _html })
+                  body: JSON.stringify({ title: _title, userName: contact.firstName + " " + contact.lastName, userEmail: contact.email, employer: contact.school || "", rows: rows, sendEmail: true })
                 }).then(function(r){ if(r.ok){ console.log('[Sinclair] Email sent to', contact.email); } else { console.warn('[Sinclair] Email failed:', r.status); } }).catch(function(e){ console.error('[Sinclair] Email error:', e); });
               }
             }} disabled={!allAnswered}>
