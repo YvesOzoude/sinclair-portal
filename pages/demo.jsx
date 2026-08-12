@@ -174,7 +174,6 @@ function generatePDF(title, rows, contact, footer) {
   a.href = url;
   a.download = safeTitle.replace(/\s+/g, "_") + ".html";
   // Auto-email report
-  alert('contact email is: ' + (contact ? contact.email : 'NO CONTACT'));
   if (contact && contact.email) {
     fetch('/api/send-assessment-email', {
       method: 'POST',
@@ -187,14 +186,26 @@ function generatePDF(title, rows, contact, footer) {
       })
     })
     .then(function(r){ 
-      if(r.ok){
-        alert('Report emailed to ' + contact.email);
-      } else {
-        alert('Email failed: ' + r.status);
-      }
+      return r.json().then(function(data) {
+        var msg = document.createElement('div');
+        msg.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;text-align:center;font-size:16px;z-index:9999;';
+        if(r.ok){
+          msg.style.background = '#34C759';
+          msg.style.color = 'white';
+          msg.textContent = 'Email sent to ' + contact.email;
+        } else {
+          msg.style.background = '#FF3B30';
+          msg.style.color = 'white';
+          msg.textContent = 'Email failed: ' + JSON.stringify(data);
+        }
+        document.body.appendChild(msg);
+      });
     })
     .catch(function(e){ 
-      alert('Email error: ' + e.message);
+      var msg = document.createElement('div');
+      msg.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:16px;text-align:center;font-size:16px;z-index:9999;background:#FF3B30;color:white;';
+      msg.textContent = 'Fetch error: ' + e.message;
+      document.body.appendChild(msg);
     });
   }
 
