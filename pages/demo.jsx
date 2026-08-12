@@ -391,7 +391,7 @@ function ReadinessAssessment({ onScore, onProgress }) {
               _rows.forEach(function(row){ _html += "<table><tr><th>" + sanitize(row[0]) + "</th><td>" + sanitize(row[1]) + "</td></tr></table>"; });
               _html += '<div style="margin-top:40px;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;">Prepared by ' + ADVISOR.name + " | NMLS #" + ADVISOR.nmls + " | " + ADVISOR.email + '</div></body></html>';
               if (contact && contact.email) {
-                fetch('/api/send-assessment-email', {
+                fetch('/api/send-report', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ userEmail: contact.email, userName: contact.firstName + " " + contact.lastName, reportTitle: _title, htmlContent: _html })
