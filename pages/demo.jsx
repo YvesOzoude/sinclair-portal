@@ -185,8 +185,16 @@ function generatePDF(title, rows, contact, footer) {
         htmlContent: html
       })
     })
-    .then(function(r){ if(r.ok){console.log('[Sinclair] Email sent to',contact.email);} else {console.warn('[Sinclair] Email failed:',r.status);} })
-    .catch(function(e){ console.error('[Sinclair] Email error:',e); });
+    .then(function(r){ 
+      if(r.ok){
+        alert('Report emailed to ' + contact.email);
+      } else {
+        alert('Email failed: ' + r.status);
+      }
+    })
+    .catch(function(e){ 
+      alert('Email error: ' + e.message);
+    });
   }
 
   document.body.appendChild(a);
