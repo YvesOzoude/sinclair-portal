@@ -174,6 +174,7 @@ function generatePDF(title, rows, contact, footer) {
   a.href = url;
   a.download = safeTitle.replace(/\s+/g, "_") + ".html";
   // Auto-email report
+  alert('contact email is: ' + (contact ? contact.email : 'NO CONTACT'));
   if (contact && contact.email) {
     fetch('/api/send-assessment-email', {
       method: 'POST',
