@@ -146,7 +146,7 @@ function sanitize(str) {
     .replace(/â/g, "'");
 }
 
-async function generatePDF(title, rows, contact, footer) {
+function generatePDF(title, rows, contact, footer) {
   const safeTitle = sanitize(title);
   const css = [
     "body{font-family:Georgia,serif;padding:40px;color:#0B1E3F;}",
@@ -323,7 +323,7 @@ function ReadinessAssessment({ onScore, onProgress }) {
   const [showTooltip, setShowTooltip] = useState(null);
   const [step, setStep] = useState("contact");
 
-  async function calculate() {
+  function calculate() {
     const total = answers.reduce((sum, a, i) => sum + (a !== null ? QUESTIONS[i].pts[a] : 0), 0);
     const score = Math.round((total / 32) * 100);
     setResult(score);
@@ -332,10 +332,10 @@ function ReadinessAssessment({ onScore, onProgress }) {
     downloadPDF(score);
   }
 
-  async function downloadPDF(score) {
+  function downloadPDF(score) {
     const rows = QUESTIONS.map((q, i) => [q.q, answers[i] !== null ? q.opts[answers[i]] : "-"]);
     rows.push(["Readiness Score", `${score} / 100`]);
-    await generatePDF(
+    generatePDF(
       `Readiness Score - ${contact.lastName}, ${contact.firstName}`,
       rows,
       { name: `${contact.firstName} ${contact.lastName}`, email: contact.email },
@@ -459,7 +459,7 @@ function BudgetTool({ onProgress }) {
       ["Total Expenses", `$${totalExp.toLocaleString()}`],
       ["Remaining After Expenses & Savings", `$${left.toLocaleString()}`],
     ];
-    await generatePDF("Monthly Budget Analysis", rows, { name: contact.name, email: contact.email }, left >= 0 ? `You have $${left.toLocaleString()} available beyond expenses and savings each month.` : `Expenses exceed income by $${Math.abs(left).toLocaleString()}. Your advisor can help create a plan.`);
+    generatePDF("Monthly Budget Analysis", rows, { name: contact.name, email: contact.email }, left >= 0 ? `You have $${left.toLocaleString()} available beyond expenses and savings each month.` : `Expenses exceed income by $${Math.abs(left).toLocaleString()}. Your advisor can help create a plan.`);
   }
 
   const expLabels = { rent: "Rent/Housing", car: "Car Payment", food: "Food/Groceries", utilities: "Utilities", insurance: "Insurance", loans: "Other Loans", subscriptions: "Subscriptions", other: "Other" };
@@ -535,7 +535,7 @@ function AffordabilityCalc({ onProgress }) {
     const res = { price: Math.round(price), loan: Math.round(loanAmt), payment: Math.round(maxPayment) };
     setResult(res);
     onProgress("Affordability Calculator");
-    await generatePDF("Home Affordability Analysis", [
+    generatePDF("Home Affordability Analysis", [
       ["Annual Gross Income", `$${(parseFloat(f.income)||0).toLocaleString()}`],
       ["Monthly Debt Payments", `$${(parseFloat(f.debt)||0).toLocaleString()}`],
       ["Down Payment Available", `$${(parseFloat(f.down)||0).toLocaleString()}`],
@@ -739,7 +739,7 @@ function ClosingCostCalc({ onProgress }) {
     const total = items.reduce((s, i) => s + i.val, 0);
     setResult({ items, total });
     onProgress("Closing Cost Calculator");
-    await generatePDF("Estimated Closing Costs", [["Purchase Price", `$${p.toLocaleString()}`], ["State", state], ...items.map(i => [i.name, `$${i.val.toLocaleString()}`]), ["Total Estimated Closing Costs", `$${total.toLocaleString()}`]], { name: contact.name, email: contact.email }, "This is an estimate. Actual closing costs may vary. Contact your advisor for a Loan Estimate.");
+    generatePDF("Estimated Closing Costs", [["Purchase Price", `$${p.toLocaleString()}`], ["State", state], ...items.map(i => [i.name, `$${i.val.toLocaleString()}`]), ["Total Estimated Closing Costs", `$${total.toLocaleString()}`]], { name: contact.name, email: contact.email }, "This is an estimate. Actual closing costs may vary. Contact your advisor for a Loan Estimate.");
   }
 
   return (
@@ -911,7 +911,7 @@ function CreditPlanner({ onProgress }) {
       ["Checklist Items Completed", `${done} / ${CREDIT_ITEMS.length}`],
       ...completedItems.map(item => [`✓ ${item.task}`, item.impact + " Impact"]),
     ];
-    await generatePDF(`Credit Improvement Plan - ${contact.name}`, rows, { name: contact.name, email: contact.email }, `Your advisor can review this plan with you and suggest lender-specific strategies. ${APP_LINK}`);
+    generatePDF(`Credit Improvement Plan - ${contact.name}`, rows, { name: contact.name, email: contact.email }, `Your advisor can review this plan with you and suggest lender-specific strategies. ${APP_LINK}`);
   }
 
   return (
