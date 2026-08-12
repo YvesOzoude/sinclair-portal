@@ -328,6 +328,7 @@ function ReadinessAssessment({ onScore, onProgress }) {
 
   const allAnswered = answers.every(a => a !== null);
   const contactReady = contact.firstName && contact.lastName && contact.email;
+  const [sendEmail, setSendEmail] = React.useState(true);
   const scoreColor = result >= 70 ? C.green : result >= 40 ? C.gold : C.red;
   const scoreLabel = result >= 70 ? "Ready to Begin" : result >= 40 ? "Building Readiness" : "Early Stage - Let's Get Started";
   const dpaTriggered = answers[1] !== null && QUESTIONS[1].dpaAlert.includes(answers[1]);
@@ -394,9 +395,13 @@ function ReadinessAssessment({ onScore, onProgress }) {
                 fetch('/api/send-report', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ title: _title, userName: contact.firstName + " " + contact.lastName, userEmail: contact.email, employer: contact.school || "", rows: [["Report", _title]], sendEmail: true })
+                  body: JSON.stringify({ title: _title, userName: contact.firstName + " " + contact.lastName, userEmail: contact.email, employer: contact.school || "", rows: [["Report", _title]], sendEmail: sendEmail })
                 }).then(function(r){ if(r.ok){ console.log('[Sinclair] Email sent to', contact.email); } else { console.warn('[Sinclair] Email failed:', r.status); } }).catch(function(e){ console.error('[Sinclair] Email error:', e); });
               }
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <input type="checkbox" id="emailOpt" checked={sendEmail} onChange={e => setSendEmail(e.target.checked)} />
+                <label htmlFor="emailOpt" style={{ fontSize: 13, cursor: "pointer" }}>Email me a copy of my results</label>
+              </div>
             }} disabled={!allAnswered}>
             Calculate My Score & Download Results
           </button>
